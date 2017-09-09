@@ -1,0 +1,95 @@
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  CognitoSignupLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoSignupLambda::handleRequest
+      FunctionName: CognitoSignupLambda
+      Policies:
+       - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 15
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Environment:
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /cognito/user/signup
+            Method: post
+  CognitoSigninLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoSigninLambda::handleRequest
+      FunctionName: CognitoSigninLambda
+      Policies:
+       - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 15
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Environment:
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /cognito/user/signin
+            Method: post
+  CognitoDeleteUserLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoDeleteUserLambda::handleRequest
+      FunctionName: CognitoDeleteUserLambda
+      Policies:
+             - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 15
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Policies: AmazonCognitoReadOnly
+      Environment:
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /cognito/user
+            Method: delete
+  CognitoTokenValidLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoTokenValidLambda::handleRequest
+      FunctionName: CognitoTokenValidLambda
+      Policies:
+             - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 15
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Policies: AmazonCognitoReadOnly
+      Environment:
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /cognito/user/token/valid
+            Method: get
+  CognitoResetPassword:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoResetPassword::handleRequest
+      FunctionName: CognitoResetPassword
+      Policies:
+             - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 15
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Policies: AmazonCognitoReadOnly
+      Environment:
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /cognito/user/password/reset
+            Method: post
