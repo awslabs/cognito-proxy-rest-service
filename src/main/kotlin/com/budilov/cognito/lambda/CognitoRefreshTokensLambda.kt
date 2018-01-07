@@ -5,8 +5,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
-class CognitoSigninLambda : RequestHandler<ApiGatewayRequest.Input,
-        CognitoSigninLambda.AuthResponse> {
+class CognitoRefreshTokensLambda : RequestHandler<ApiGatewayRequest.Input,
+        CognitoRefreshTokensLambda.AuthResponse> {
 
     data class AuthResponse(val statusCode: Int,
                             val body: String)
@@ -19,16 +19,22 @@ class CognitoSigninLambda : RequestHandler<ApiGatewayRequest.Input,
      */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): AuthResponse? {
-
         val logger = context?.logger
-        val username = request?.headers?.get("username")
-        val password = request?.headers?.get("password")
+
+        val refreshToken = request?.headers?.get("refreshToken")
+
+        logger?.log("${refreshToken}")
         var status = 400
-        val resultBody = if (username != null && password != null) {
-            status = 200;
-            Gson().toJson(cognito.signInNoSRP(username = username,
-                    password = password))
-        } else "Username and password are required"
+        val resultBody = if (refreshToken != null) {
+            status = 200
+
+            val response = cognito.adminRefreshTokens(refreshToken = refreshToken)
+
+            Gson().toJson(response)
+        } else {
+            logger?.log("Username and password are required")
+            "Username and password are required"
+        }
 
         logger?.log("request payload: " + Gson().toJson(request))
 

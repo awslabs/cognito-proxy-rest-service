@@ -9,4 +9,5 @@ gradlew.bat
 repo/
 .idea/
 out/
+nohup.out
 

@@ -2,7 +2,6 @@ package com.budilov.cognito.lambda
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.budilov.cognito.PropertyFileConverter
 import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
@@ -12,7 +11,7 @@ class CognitoDeleteUserLambda : RequestHandler<ApiGatewayRequest.Input,
     data class AuthResponse(val statusCode: Int,
                             val body: String)
 
-    val cognito = CognitoService(PropertyFileConverter.readCredentials())
+    val cognito = CognitoService()
 
     /**
      * 1. Get the request from API Gateway. Unmarshal (automatically) the request

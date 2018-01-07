@@ -1,57 +1,65 @@
 package com.budilov.cognito.services.cognito
 
-import com.amazonaws.auth.AWSCredentialsProviderChain
 import com.auth0.jwk.UrlJwkProvider
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.budilov.cognito.Properties
-import com.budilov.cognito.PropertyFileConverter
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.auth.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*
+import java.net.URL
 import java.security.interfaces.RSAKey
+import com.auth0.jwk.GuavaCachedJwkProvider
+import com.auth0.jwk.JwkProvider
 
+
+
+
+data class JwtKey(val alg: String, val e: String, val kid: String, val kty: String, val n: String, val use: String)
 
 /**
  * Created by Vladimir Budilov
  *
- * The API is documented here: http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_Operations.html
+ * The API is documented here:
+ * http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_Operations.html
  *
  */
 class CognitoService {
 
-    constructor(props: Properties) {
-        properties = props
-        cognitoUPClient = CognitoIdentityProviderClient.builder()
-                .region(Region.of(properties.regionName))
-                .credentialsProvider(DefaultCredentialsProvider.builder().build())
-                .build()
-    }
 
-    val properties: Properties
     private val logger = LoggerFactory.getLogger("CognitoService")
     private val cognitoUPClient: CognitoIdentityProviderClient
 
-    /**
-     *
-     * Requires:
-     * https://github.com/auth0/jwks-rsa-java
-     *
-     * Another option is to use this one:
-     * https://github.com/jwtk/jjwt
-     *
-     */
+    constructor() {
+        cognitoUPClient = CognitoIdentityProviderClient.builder()
+                .region(Region.of(Properties.regionName))
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
+                .build()
+
+        // Download the JWKs from Cognito
+    }
+
+    fun getKidFromToken(token: String) {
+
+    }
+
     @Throws(Exception::class)
     fun isTokenValid(token: String): Boolean {
-        val resource = javaClass.classLoader.getResource("jwks.json")
-        val provider = UrlJwkProvider(resource)
-        val jwk = provider.get(properties.jwtIdTokenKid)
+
+        // Decode the key and set the kid
+        val decodedJwtToken = JWT.decode(token)
+        val kid = decodedJwtToken.keyId
+
+        val http = UrlJwkProvider(URL(Properties.jwksUrl))
+        // Let's cache the result from Cognito for the default of 10 hours
+        val provider = GuavaCachedJwkProvider(http)
+        val jwk = provider.get(kid)
 
         val algorithm = Algorithm.RSA256(jwk.publicKey as RSAKey)
         val verifier = JWT.require(algorithm)
-                .withIssuer("https://cognito-idp.${properties.regionName}.amazonaws.com/${properties.cognitoUserPoolId}")
+                .withIssuer(Properties.jwtTokenIssuer)
                 .build() //Reusable verifier instance
         val jwt = try {
             verifier.verify(token)
@@ -62,7 +70,7 @@ class CognitoService {
         return (jwt != null)
     }
 
-    fun getUsername(idToken: String):String {
+    fun getUsername(idToken: String): String {
         return JWT.decode(idToken).getClaim("cognito:username").asString()
     }
 
@@ -93,9 +101,52 @@ class CognitoService {
         val authParametersMap = mutableMapOf("USERNAME" to username, "PASSWORD" to password)
         logger.info("map: ${authParametersMap}")
         var authRequest = AdminInitiateAuthRequest.builder()
-                .clientId(properties.cognitoClientId)
-                .userPoolId(properties.cognitoUserPoolId)
+                .clientId(Properties.cognitoAppClientId)
+                .userPoolId(Properties.cognitoUserPoolId)
                 .authFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
+                .authParameters(authParametersMap)
+                .build()
+
+        val response: Any = try {
+            cognitoUPClient.adminInitiateAuth(authRequest)
+        } catch (e: Exception) {
+            logger.error("Couldn't retrieve authToken because ${e.stackTrace}")
+            """ {"responseType": "error", "message": "${e.message}"} """
+        }
+
+        return response
+    }
+
+    /**
+     * http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
+     *
+     * Response:
+     * {
+    "AuthenticationResult": {
+    "AccessToken": "string",
+    "ExpiresIn": number,
+    "IdToken": "string",
+    "NewDeviceMetadata": {
+    "DeviceGroupKey": "string",
+    "DeviceKey": "string"
+    },
+    "RefreshToken": "string",
+    "TokenType": "string"
+    },
+    "ChallengeName": "string",
+    "ChallengeParameters": {
+    "string" : "string"
+    },
+    "Session": "string"
+    }
+     */
+    fun adminRefreshTokens(refreshToken: String): Any {
+        val authParametersMap = mutableMapOf("REFRESH_TOKEN" to refreshToken)
+        logger.info("map: ${authParametersMap}")
+        var authRequest = AdminInitiateAuthRequest.builder()
+                .clientId(Properties.cognitoAppClientId)
+                .userPoolId(Properties.cognitoUserPoolId)
+                .authFlow(AuthFlowType.REFRESH_TOKEN_AUTH)
                 .authParameters(authParametersMap)
                 .build()
 
@@ -108,7 +159,6 @@ class CognitoService {
 
         return response
     }
-
 
     /**
      * @return
@@ -127,7 +177,7 @@ class CognitoService {
         val attr = AttributeType.builder().name("email").value(username).build()
 
         val signUpRequest = SignUpRequest.builder()
-                .clientId(properties.cognitoClientId)
+                .clientId(Properties.cognitoAppClientId)
                 .username(username)
                 .password(password)
                 .userAttributes(attr)
@@ -143,7 +193,7 @@ class CognitoService {
     }
 
     fun adminConfirmSignUp(username: String): Any {
-        val confirmSignupRequest = AdminConfirmSignUpRequest.builder().userPoolId(properties.cognitoUserPoolId).username(username).build()
+        val confirmSignupRequest = AdminConfirmSignUpRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
         val response: Any = try {
             cognitoUPClient.adminConfirmSignUp(confirmSignupRequest)
@@ -157,7 +207,7 @@ class CognitoService {
 
 
     fun adminResetPassword(username: String): Any {
-        val request = AdminResetUserPasswordRequest.builder().userPoolId(properties.cognitoUserPoolId).username(username).build()
+        val request = AdminResetUserPasswordRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
         val response: Any = try {
             cognitoUPClient.adminResetUserPassword(request)
@@ -170,7 +220,7 @@ class CognitoService {
     }
 
     fun adminDeleteUser(username: String): Any {
-        val request = AdminDeleteUserRequest.builder().userPoolId(properties.cognitoUserPoolId).username(username).build()
+        val request = AdminDeleteUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
         val response: Any = try {
             cognitoUPClient.adminDeleteUser(request)
@@ -181,15 +231,16 @@ class CognitoService {
 
         return response
     }
+
+
 }
 
 fun main(args: Array<String>) {
     val username = "vladimirbudilov@budilov.com"
     val password = "SomethingInteresting23!"
-    val service = CognitoService(PropertyFileConverter.readCredentials())
+    val service = CognitoService()
 
     println("signup response: " + service.signUp(username = username, password = password))
-
 
     println("signIn response: " + service.signInNoSRP(username = username, password = password))
     println("confirmSignUp response: " + service.adminConfirmSignUp(username = username))
