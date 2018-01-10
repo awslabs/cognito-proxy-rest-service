@@ -6,10 +6,8 @@ import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
 class CognitoResetPasswordLambda : RequestHandler<ApiGatewayRequest.Input,
-        CognitoResetPasswordLambda.AuthResponse> {
+        ApiGatewayResponse> {
 
-    data class AuthResponse(val statusCode: Int,
-                            val body: String)
 
     val cognito = CognitoService()
 
@@ -18,32 +16,35 @@ class CognitoResetPasswordLambda : RequestHandler<ApiGatewayRequest.Input,
      * 2. Get the
      */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
-                               context: Context?): AuthResponse? {
+                               context: Context?): ApiGatewayResponse? {
 
         val logger = context?.logger
 
         val idToken = request?.headers?.get("idToken")
 
         var status = 400
-        val resultBody = if (idToken != null) {
+        var response: String = ""
+
+        if (idToken != null) {
             // Check to see if the token is valid and if the username matches the
             // idToken's username
-            val tokenValid = cognito.isTokenValid(idToken)
-
-            var deleteUserResponse: Any = "Couldn't reset the password because of a bad token."
-            if (tokenValid) {
-                status = 200
-                deleteUserResponse = cognito.adminResetPassword(username = cognito.getUsername(idToken))
+            val tokenValid = try {
+                cognito.isTokenValid(idToken)
+            } catch (e: Exception) {
+                logger?.log("Couldn't figure out if the id token is valid...caught an exception...${e.stackTrace}")
+                false
             }
 
-            Gson().toJson(deleteUserResponse)
+            if (tokenValid) {
+                val username = cognito.getUsername(idToken)
+                response = Gson().toJson(cognito.adminResetPassword(username = username))
+                status = 200
+            }
+
         } else {
-            logger?.log("Username and idToken are required")
-            "Username and idToken are required"
+            logger?.log("The id token is required")
         }
 
-        logger?.log("request payload: " + Gson().toJson(request))
-
-        return AuthResponse(status, resultBody)
+        return ApiGatewayResponse(statusCode = status, body = response)
     }
 }

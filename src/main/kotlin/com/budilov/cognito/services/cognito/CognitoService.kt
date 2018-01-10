@@ -1,9 +1,11 @@
 package com.budilov.cognito.services.cognito
 
+import com.auth0.jwk.GuavaCachedJwkProvider
 import com.auth0.jwk.UrlJwkProvider
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.budilov.cognito.Properties
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.auth.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -11,13 +13,11 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*
 import java.net.URL
 import java.security.interfaces.RSAKey
-import com.auth0.jwk.GuavaCachedJwkProvider
-import com.auth0.jwk.JwkProvider
 
-
-
-
-data class JwtKey(val alg: String, val e: String, val kid: String, val kty: String, val n: String, val use: String)
+data class AuthServiceResult(val successful: Boolean = true,
+                             val result: Any? = null,
+                             val errorMessage: String? = null,
+                             val errorType: String? = null)
 
 /**
  * Created by Vladimir Budilov
@@ -30,20 +30,10 @@ class CognitoService {
 
 
     private val logger = LoggerFactory.getLogger("CognitoService")
-    private val cognitoUPClient: CognitoIdentityProviderClient
-
-    constructor() {
-        cognitoUPClient = CognitoIdentityProviderClient.builder()
-                .region(Region.of(Properties.regionName))
-                .credentialsProvider(DefaultCredentialsProvider.builder().build())
-                .build()
-
-        // Download the JWKs from Cognito
-    }
-
-    fun getKidFromToken(token: String) {
-
-    }
+    private val cognitoUPClient: CognitoIdentityProviderClient = CognitoIdentityProviderClient.builder()
+            .region(Region.of(Properties.regionName))
+            .credentialsProvider(DefaultCredentialsProvider.builder().build())
+            .build()
 
     @Throws(Exception::class)
     fun isTokenValid(token: String): Boolean {
@@ -77,102 +67,49 @@ class CognitoService {
     /**
      * Signs in a user without SRP with the provided [username] and [password]
      *
-     * @return
-     * {
-    "AuthenticationResult": {
-    "AccessToken": "string",
-    "ExpiresIn": number,
-    "IdToken": "string",
-    "NewDeviceMetadata": {
-    "DeviceGroupKey": "string",
-    "DeviceKey": "string"
-    },
-    "RefreshToken": "string",
-    "TokenType": "string"
-    },
-    "ChallengeName": "string",
-    "ChallengeParameters": {
-    "string" : "string"
-    },
-    "Session": "string"
-    }
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
+     *
+     * @return the auth payload or throws an Exception
      */
-    fun signInNoSRP(username: String, password: String): Any {
+    fun signInNoSRP(username: String, password: String): AuthServiceResult {
         val authParametersMap = mutableMapOf("USERNAME" to username, "PASSWORD" to password)
-        logger.info("map: ${authParametersMap}")
-        var authRequest = AdminInitiateAuthRequest.builder()
+        val authRequest = AdminInitiateAuthRequest.builder()
                 .clientId(Properties.cognitoAppClientId)
                 .userPoolId(Properties.cognitoUserPoolId)
                 .authFlow(AuthFlowType.ADMIN_NO_SRP_AUTH)
                 .authParameters(authParametersMap)
                 .build()
 
-        val response: Any = try {
-            cognitoUPClient.adminInitiateAuth(authRequest)
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminInitiateAuth(authRequest))
         } catch (e: Exception) {
-            logger.error("Couldn't retrieve authToken because ${e.stackTrace}")
-            """ {"responseType": "error", "message": "${e.message}"} """
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
-
-        return response
     }
 
     /**
-     * http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
      *
-     * Response:
-     * {
-    "AuthenticationResult": {
-    "AccessToken": "string",
-    "ExpiresIn": number,
-    "IdToken": "string",
-    "NewDeviceMetadata": {
-    "DeviceGroupKey": "string",
-    "DeviceKey": "string"
-    },
-    "RefreshToken": "string",
-    "TokenType": "string"
-    },
-    "ChallengeName": "string",
-    "ChallengeParameters": {
-    "string" : "string"
-    },
-    "Session": "string"
-    }
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
      */
-    fun adminRefreshTokens(refreshToken: String): Any {
+    fun adminRefreshTokens(refreshToken: String): AuthServiceResult {
         val authParametersMap = mutableMapOf("REFRESH_TOKEN" to refreshToken)
         logger.info("map: ${authParametersMap}")
-        var authRequest = AdminInitiateAuthRequest.builder()
+        val authRequest = AdminInitiateAuthRequest.builder()
                 .clientId(Properties.cognitoAppClientId)
                 .userPoolId(Properties.cognitoUserPoolId)
                 .authFlow(AuthFlowType.REFRESH_TOKEN_AUTH)
                 .authParameters(authParametersMap)
                 .build()
 
-        val response: Any = try {
-            cognitoUPClient.adminInitiateAuth(authRequest)
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminInitiateAuth(authRequest))
         } catch (e: Exception) {
-            logger.error("Couldn't retrieve authToken because ${e.stackTrace}")
-            e.message ?: "Error"
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
-
-        return response
     }
 
-    /**
-     * @return
-    {
-    "CodeDeliveryDetails": {
-    "AttributeName": "string",
-    "DeliveryMedium": "string",
-    "Destination": "string"
-    },
-    "UserConfirmed": boolean,
-    "UserSub": "string"
-    }
-     */
-    fun signUp(username: String, password: String): Any {
+
+    fun signUp(username: String, password: String): AuthServiceResult {
         logger.debug("entering function")
         val attr = AttributeType.builder().name("email").value(username).build()
 
@@ -182,67 +119,55 @@ class CognitoService {
                 .password(password)
                 .userAttributes(attr)
                 .build()
-        val response = try {
-            cognitoUPClient.signUp(signUpRequest)
-        } catch (e: Exception) {
-            logger.error("Couldn't signUp because ${e.message}")
-            e.message ?: "Error"
-        }
 
-        return response
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.signUp(signUpRequest))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
     }
 
-    fun adminConfirmSignUp(username: String): Any {
+    fun adminConfirmSignUp(username: String): AuthServiceResult {
         val confirmSignupRequest = AdminConfirmSignUpRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
-        val response: Any = try {
-            cognitoUPClient.adminConfirmSignUp(confirmSignupRequest)
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminConfirmSignUp(confirmSignupRequest))
         } catch (e: Exception) {
-            logger.error("Couldn't confirm signup because ${e.message}")
-            e.message ?: "Error"
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
-
-        return response
     }
 
 
-    fun adminResetPassword(username: String): Any {
+    fun adminResetPassword(username: String): AuthServiceResult {
         val request = AdminResetUserPasswordRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
-        val response: Any = try {
-            cognitoUPClient.adminResetUserPassword(request)
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminResetUserPassword(request))
         } catch (e: Exception) {
-            logger.error("Couldn't reset because ${e.message}")
-            e.message ?: "Error"
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
-
-        return response
     }
 
-    fun adminDeleteUser(username: String): Any {
+    fun adminDeleteUser(username: String): AuthServiceResult {
         val request = AdminDeleteUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
-        val response: Any = try {
-            cognitoUPClient.adminDeleteUser(request)
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminDeleteUser(request))
         } catch (e: Exception) {
-            logger.error("Couldn't delete user because ${e.message}")
-            e.message ?: "Error"
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
-
-        return response
     }
 
 
 }
 
 fun main(args: Array<String>) {
-    val username = "vladimirbudilov@budilov.com"
+    val username = "vladimirbudilov4442@budilov.com"
     val password = "SomethingInteresting23!"
     val service = CognitoService()
 
-    println("signup response: " + service.signUp(username = username, password = password))
-
-    println("signIn response: " + service.signInNoSRP(username = username, password = password))
-    println("confirmSignUp response: " + service.adminConfirmSignUp(username = username))
-    println("signIn response: " + service.signInNoSRP(username = username, password = password))
+    println("signup body: " + service.signUp(username = username, password = password))
+    println("confirmSignUp body: " + service.adminConfirmSignUp(username = username))
+    println("signIn body: " + service.signInNoSRP(username = username, password = password))
+    println("deleteUser body: " + service.adminDeleteUser(username = username))
 }

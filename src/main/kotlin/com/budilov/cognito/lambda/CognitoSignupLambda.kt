@@ -6,10 +6,7 @@ import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
 class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
-        CognitoSignupLambda.AuthResponse> {
-
-    data class AuthResponse(val statusCode: Int,
-                            val body: String)
+        ApiGatewayResponse> {
 
     val cognito = CognitoService()
 
@@ -18,7 +15,7 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
      * 2. Get the
      */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
-                               context: Context?): AuthResponse? {
+                               context: Context?): ApiGatewayResponse {
         val logger = context?.logger
 
         val username = request?.headers?.get("username")
@@ -26,21 +23,14 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
 
         logger?.log("${username} & ${password}")
         var status = 400
-        val resultBody = if (username != null && password != null) {
+        var response: String = ""
+
+        if (username != null && password != null) {
             status = 200
-
-            val signupResponse = cognito.signUp(username = username, password = password)
-
-            cognito.adminConfirmSignUp(username = username)
-
-            Gson().toJson(signupResponse)
-        } else {
-            logger?.log("Username and password are required")
-            "Username and password are required"
+            response = Gson().toJson(cognito.signUp(username = username,
+                    password = password))
         }
 
-        logger?.log("request payload: " + Gson().toJson(request))
-
-        return AuthResponse(status, resultBody)
+        return ApiGatewayResponse(statusCode = status, body = response)
     }
 }

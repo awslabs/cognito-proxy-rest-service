@@ -1,4 +1,14 @@
 Transform: AWS::Serverless-2016-10-31
+Parameters:
+  RegionParameter:
+    Type: String
+    Default: us-east-1
+  CognitoUserPoolIdParameter:
+    Type: String
+    Default: us-east-1_PGSbCVZ7S
+  CognitoAppClientIdParameter:
+    Type: String
+    Default: hikoo0i7jmt9lplrd2j0n9jqo
 Resources:
   UserSignup:
     Type: AWS::Serverless::Function
@@ -9,18 +19,21 @@ Resources:
        - AmazonCognitoPowerUser
       Runtime: java8
       MemorySize: 1024
-      Timeout: 15
+      Timeout: 20
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/signup
+            Path: /signup
             Method: post
   RefreshTokens:
     Type: AWS::Serverless::Function
@@ -35,14 +48,17 @@ Resources:
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/refresh
+            Path: /refresh
             Method: post
   UserSignin:
     Type: AWS::Serverless::Function
@@ -57,14 +73,17 @@ Resources:
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/signin
+            Path: /signin
             Method: post
   UserDelete:
     Type: AWS::Serverless::Function
@@ -79,14 +98,17 @@ Resources:
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/user
+            Path: /user
             Method: delete
   CheckTokenValidity:
     Type: AWS::Serverless::Function
@@ -101,14 +123,17 @@ Resources:
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/user/token/valid
+            Path: /user/token/valid
             Method: get
   ResetPassword:
     Type: AWS::Serverless::Function
@@ -123,12 +148,16 @@ Resources:
       CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
       Environment:
         Variables:
-          REGION_NAME: REGION_CHANGE_ME
-          COGNITO_USER_POOL_ID: POOL_ID_CHANGE_ME
-          COGNITO_APP_CLIENT_ID: CLIENT_ID_CHANGE_ME
+        Variables:
+          REGION_NAME: 
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /cognito/user/password/reset
+            Path: /user/password/reset
             Method: post

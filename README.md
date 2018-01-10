@@ -1,4 +1,6 @@
 ### Why
+* Serves as a guide on how to use the Cognito Admin Java SDK
+* QuickStart for any custom IdP--> Cognito migration backend
 
 [Serverless Application Model -- How-To](https://github.com/awslabs/serverless-application-model/blob/master/HOWTO.md)
 

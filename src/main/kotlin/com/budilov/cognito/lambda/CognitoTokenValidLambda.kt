@@ -6,10 +6,8 @@ import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
 class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
-        CognitoTokenValidLambda.AuthResponse> {
+        ApiGatewayResponse> {
 
-    data class AuthResponse(val statusCode: Int,
-                            val body: String)
 
     val cognito = CognitoService()
 
@@ -18,23 +16,21 @@ class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
      * 2. Get the
      */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
-                               context: Context?): AuthResponse? {
+                               context: Context?): ApiGatewayResponse? {
 
         val logger = context?.logger
 
         val idToken = request?.headers?.get("idToken")
 
         var status = 400
-        val resultBody = if (idToken != null) {
+        var response: String = ""
+
+        if (idToken != null) {
+            response = Gson().toJson(cognito.isTokenValid(idToken))
             status = 200
-            Gson().toJson(cognito.isTokenValid(idToken))
-        } else {
-            logger?.log("Username and password are required")
-            "Username and password are required"
+
         }
 
-        logger?.log("request payload: " + Gson().toJson(request))
-
-        return AuthResponse(status, resultBody)
+        return ApiGatewayResponse(statusCode = status, body = response)
     }
 }
