@@ -5,6 +5,9 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.budilov.cognito.services.cognito.CognitoService
 import com.google.gson.Gson
 
+/**
+ * @author Vladimir Budilov
+ */
 class CognitoResetPasswordLambda : RequestHandler<ApiGatewayRequest.Input,
         ApiGatewayResponse> {
 

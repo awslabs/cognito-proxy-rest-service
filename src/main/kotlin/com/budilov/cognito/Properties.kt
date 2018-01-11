@@ -1,7 +1,8 @@
 package com.budilov.cognito
 
 /**
- * Created by Vladimir Budilov
+ * @author Vladimir Budilov
+ *
  * https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json -->
  *
  * https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PGSbCVZ7S/.well-known/jwks.json

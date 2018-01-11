@@ -20,7 +20,7 @@ data class AuthServiceResult(val successful: Boolean = true,
                              val errorType: String? = null)
 
 /**
- * Created by Vladimir Budilov
+ * @author Vladimir Budilov
  *
  * The API is documented here:
  * http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_Operations.html
@@ -87,6 +87,52 @@ class CognitoService {
         }
     }
 
+    fun signUp(username: String, password: String): AuthServiceResult {
+        logger.debug("entering function")
+        val attr = AttributeType.builder().name("email").value(username).build()
+
+        val signUpRequest = SignUpRequest.builder()
+                .clientId(Properties.cognitoAppClientId)
+                .username(username)
+                .password(password)
+                .userAttributes(attr)
+                .build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.signUp(signUpRequest))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
+    /**
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminConfirmSignUp.html
+     */
+    fun adminConfirmSignUp(username: String): AuthServiceResult {
+        val confirmSignupRequest = AdminConfirmSignUpRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminConfirmSignUp(confirmSignupRequest))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
+    /**
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminConfirmSignUp.html
+     */
+    fun confirmSignUp(username: String, confirmationCode: String): AuthServiceResult {
+        val confirmSignupRequest = ConfirmSignUpRequest.builder().clientId(Properties.cognitoAppClientId)
+                .confirmationCode(confirmationCode)
+                .username(username).build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.confirmSignUp(confirmSignupRequest))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
     /**
      *
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
@@ -108,36 +154,6 @@ class CognitoService {
         }
     }
 
-
-    fun signUp(username: String, password: String): AuthServiceResult {
-        logger.debug("entering function")
-        val attr = AttributeType.builder().name("email").value(username).build()
-
-        val signUpRequest = SignUpRequest.builder()
-                .clientId(Properties.cognitoAppClientId)
-                .username(username)
-                .password(password)
-                .userAttributes(attr)
-                .build()
-
-        return try {
-            AuthServiceResult(successful = true, result = cognitoUPClient.signUp(signUpRequest))
-        } catch (e: Exception) {
-            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
-        }
-    }
-
-    fun adminConfirmSignUp(username: String): AuthServiceResult {
-        val confirmSignupRequest = AdminConfirmSignUpRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
-
-        return try {
-            AuthServiceResult(successful = true, result = cognitoUPClient.adminConfirmSignUp(confirmSignupRequest))
-        } catch (e: Exception) {
-            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
-        }
-    }
-
-
     fun adminResetPassword(username: String): AuthServiceResult {
         val request = AdminResetUserPasswordRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
@@ -158,16 +174,53 @@ class CognitoService {
         }
     }
 
+    fun adminGetUser(username: String): AuthServiceResult {
+        val request = AdminGetUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminGetUser(request))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
+    fun adminUpdateUserAttributes(username: String, userAttributes: Array<AttributeType>): AuthServiceResult {
+        val request = AdminUpdateUserAttributesRequest.builder()
+                .userPoolId(Properties.cognitoUserPoolId)
+                .username(username)
+                .userAttributes(*userAttributes)
+                .build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.adminUpdateUserAttributes(request))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
+    fun confirmEmailAddress(username: String) {
+        CognitoService().adminUpdateUserAttributes(username, arrayOf(AttributeType.builder().name("email_verified").value("true").build()))
+    }
 
 }
 
 fun main(args: Array<String>) {
-    val username = "vladimirbudilov4442@budilov.com"
-    val password = "SomethingInteresting23!"
+    val username = "vladimir@budilov.com"
+    val password = "Vovan)))1"
     val service = CognitoService()
 
+    println("deleteUser body: " + service.adminDeleteUser(username))
+
     println("signup body: " + service.signUp(username = username, password = password))
-    println("confirmSignUp body: " + service.adminConfirmSignUp(username = username))
     println("signIn body: " + service.signInNoSRP(username = username, password = password))
-    println("deleteUser body: " + service.adminDeleteUser(username = username))
+    println("adminGetUser: " + service.adminGetUser(username))
+    println("adminUpdateEmail: " + service.confirmEmailAddress(username))
+    println("adminGetUser: " + service.adminGetUser(username))
+    println("adminResetPassword: " + service.adminResetPassword(username))
+    println("signIn body: " + service.signInNoSRP(username = username, password = password))
+
+//    println("confirmSignUp body: " + service.confirmSignUp(username = username, confirmationCode = "262580"))
+//    println("adminConfirmSignUp body: " + service.adminConfirmSignUp(username = username))
+//    println("deleteUser body: " + service.adminDeleteUser(username))
+
 }
