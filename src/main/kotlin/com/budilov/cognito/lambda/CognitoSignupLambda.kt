@@ -2,7 +2,7 @@ package com.budilov.cognito.lambda
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.budilov.cognito.services.cognito.CognitoService
+import com.budilov.cognito.services.CognitoService
 import com.google.gson.Gson
 
 /**
@@ -13,10 +13,6 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
 
     val cognito = CognitoService()
 
-    /**
-     * 1. Get the request from API Gateway. Unmarshal (automatically) the request
-     * 2. Get the
-     */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse {
         val logger = context?.logger
@@ -26,12 +22,14 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
 
         logger?.log("${username} & ${password}")
         var status = 400
-        var response: String = ""
+        var response = ""
 
         if (username != null && password != null) {
-            status = 200
-            response = Gson().toJson(cognito.signUp(username = username,
-                    password = password))
+            val result = cognito.signUp(username = username,
+                    password = password)
+            if (result.successful)
+                status = 200
+            response = Gson().toJson(result)
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

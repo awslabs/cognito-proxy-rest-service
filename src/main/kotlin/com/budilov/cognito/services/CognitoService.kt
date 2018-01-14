@@ -1,4 +1,4 @@
-package com.budilov.cognito.services.cognito
+package com.budilov.cognito.services
 
 import com.auth0.jwk.GuavaCachedJwkProvider
 import com.auth0.jwk.UrlJwkProvider
@@ -22,7 +22,9 @@ data class AuthServiceResult(val successful: Boolean = true,
 /**
  * @author Vladimir Budilov
  *
- * The API is documented here:
+ * This class lets you interact with Cognito in NO_SRP mode.
+ *
+ * The Cognito APIs are documented here:
  * http://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_Operations.html
  *
  */
@@ -182,6 +184,10 @@ class CognitoService {
         } catch (e: Exception) {
             AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
+    }
+
+    fun updateUserAttribute(username: String, attributeName: String, attributeValue: String) {
+        CognitoService().adminUpdateUserAttributes(username, arrayOf(AttributeType.builder().name(attributeName).value(attributeValue).build()))
     }
 
     fun adminUpdateUserAttributes(username: String, userAttributes: Array<AttributeType>): AuthServiceResult {

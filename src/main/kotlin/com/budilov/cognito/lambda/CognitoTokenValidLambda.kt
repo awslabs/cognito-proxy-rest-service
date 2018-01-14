@@ -2,7 +2,7 @@ package com.budilov.cognito.lambda
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.budilov.cognito.services.cognito.CognitoService
+import com.budilov.cognito.services.CognitoService
 import com.google.gson.Gson
 
 /**
@@ -14,10 +14,6 @@ class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
 
     val cognito = CognitoService()
 
-    /**
-     * 1. Get the request from API Gateway. Unmarshal (automatically) the request
-     * 2. Get the
-     */
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse? {
 
@@ -29,9 +25,15 @@ class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
         var response: String = ""
 
         if (idToken != null) {
-            response = Gson().toJson(cognito.isTokenValid(idToken))
-            status = 200
+            val result = try {
+                cognito.isTokenValid(idToken)
+                status = 200
+            } catch (e: Exception) {
+                logger?.log("Exception: ${e.message}")
+                false
+            }
 
+            response = Gson().toJson(result)
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

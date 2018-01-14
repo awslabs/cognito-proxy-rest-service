@@ -3,9 +3,11 @@ package com.budilov.cognito
 /**
  * @author Vladimir Budilov
  *
- * https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json -->
+ * JWKs are used to verify that JWT tokens. Here's how to download your keys manually:
+ * https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json
  *
- * https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PGSbCVZ7S/.well-known/jwks.json
+ * I'm using environment variables for some property values. The default values are setup in sam.yaml
+ *
  */
 object Properties {
 

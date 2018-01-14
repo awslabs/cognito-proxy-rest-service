@@ -133,7 +133,7 @@ Resources:
         GetResource:
           Type: Api
           Properties:
-            Path: /user/token/valid
+            Path: /token/valid
             Method: get
   ResetPassword:
     Type: AWS::Serverless::Function
@@ -159,5 +159,5 @@ Resources:
         GetResource:
           Type: Api
           Properties:
-            Path: /user/password/reset
+            Path: /password/reset
             Method: post

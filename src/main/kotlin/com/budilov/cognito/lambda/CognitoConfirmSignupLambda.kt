@@ -8,29 +8,24 @@ import com.google.gson.Gson
 /**
  * @author Vladimir Budilov
  */
-class CognitoSigninLambda : RequestHandler<ApiGatewayRequest.Input,
+class CognitoConfirmSignupLambda : RequestHandler<ApiGatewayRequest.Input,
         ApiGatewayResponse> {
-
 
     val cognito = CognitoService()
 
     override fun handleRequest(request: ApiGatewayRequest.Input?,
-                               context: Context?): ApiGatewayResponse? {
-
+                               context: Context?): ApiGatewayResponse {
         val logger = context?.logger
+
         val username = request?.headers?.get("username")
-        val password = request?.headers?.get("password")
+        val confirmationCode = request?.headers?.get("confirmationCode")
 
         var status = 400
         var response = ""
 
-        if (username != null && password != null) {
-            val result = cognito.signInNoSRP(username = username,
-                    password = password)
-            if (result.successful)
-                status = 200
-            response = Gson().toJson(result)
-            logger?.log("Got a body from Cognito: $response")
+        if (username != null && confirmationCode != null) {
+            status = 200
+            response = Gson().toJson(cognito.confirmSignUp(username = username, confirmationCode = confirmationCode))
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

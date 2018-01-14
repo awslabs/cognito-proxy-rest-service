@@ -5,6 +5,7 @@ package com.budilov.cognito.lambda
  *
  */
 data class ApiGatewayRequest(var input: Input? = null) {
+
     data class RequestContext(var accountId: String? = null,
                               var resourceId: String? = null,
                               var stage: String? = null,
@@ -24,6 +25,7 @@ data class ApiGatewayRequest(var input: Input? = null) {
                      var resource: String? = null,
                      var httpMethod: String? = null,
                      var queryStringParameters: MutableMap<String, String>? = null,
-                     var stageVariables: MutableMap<String, String>? = null
+                     var stageVariables: MutableMap<String, String>? = null,
+                     var body: String? = null
     )
 }
