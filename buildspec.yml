@@ -1,0 +1,10 @@
+version: 1.0
+phases:
+  install:
+    commands:
+      - ./gradlew jar
+      - aws cloudformation package --template-file sam.yaml --s3-bucket code.budilovv --output-template-file UpdatedSAMTemplate.yaml
+artifacts:
+  type: jar
+  files:
+    - UpdatedSAMTemplate.yaml
