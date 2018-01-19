@@ -27,8 +27,7 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
         if (username != null && password != null) {
             val result = cognito.signUp(username = username,
                     password = password)
-            if (result.successful)
-                status = 200
+            status = 200
             response = Gson().toJson(result)
         }
 

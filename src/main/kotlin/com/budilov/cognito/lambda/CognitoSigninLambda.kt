@@ -27,8 +27,7 @@ class CognitoSigninLambda : RequestHandler<ApiGatewayRequest.Input,
         if (username != null && password != null) {
             val result = cognito.signInNoSRP(username = username,
                     password = password)
-            if (result.successful)
-                status = 200
+            status = 200
             response = Gson().toJson(result)
             logger?.log("Got a body from Cognito: $response")
         }

@@ -21,15 +21,15 @@ class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
 
         val idToken = request?.headers?.get("idToken")
 
-        var status = 400
+        var status = 200
         var response: String = ""
 
         if (idToken != null) {
             val result = try {
                 cognito.isTokenValid(idToken)
-                status = 200
             } catch (e: Exception) {
                 logger?.log("Exception: ${e.message}")
+                status = 400
                 false
             }
 

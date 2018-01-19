@@ -35,6 +35,31 @@ Resources:
           Properties:
             Path: /signup
             Method: post
+  ConfirmSignup:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoConfirmSignupLambda::handleRequest
+      FunctionName: CognitoConfirmSignupLambda
+      Policies:
+       - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 20
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Environment:
+        Variables:
+          REGION_NAME:
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /confirmsignup
+            Method: post
   RefreshTokens:
     Type: AWS::Serverless::Function
     Properties:

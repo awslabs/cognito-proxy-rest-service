@@ -21,28 +21,25 @@ class CognitoDeleteUserLambda : RequestHandler<ApiGatewayRequest.Input,
 
         val idToken = request?.headers?.get("idToken")
 
-        var status = 400
+        var status = 200
         var response = ""
 
         if (idToken != null) {
             // Check to see if the token is valid and if the username matches the
             // idToken's username
 
-            val tokenValid = try {
-                cognito.isTokenValid(idToken)
+            try {
+                if (cognito.isTokenValid(idToken)) {
+                    val username = cognito.getUsername(idToken)
+                    response = Gson().toJson(cognito.adminDeleteUser(username = username))
+                }
             } catch (e: Exception) {
                 logger?.log("Couldn't figure out if the id token is valid...caught an exception...${e.stackTrace}")
-                false
-            }
-
-            if (tokenValid) {
-                val username = cognito.getUsername(idToken)
-                response = Gson().toJson(cognito.adminDeleteUser(username = username))
-                status = 200
+                status = 400
             }
 
         } else {
-            logger?.log("The id token is required")
+            return ApiGatewayResponse(statusCode = 400, body = Gson().toJson("A valid id token is required"))
         }
 
         return ApiGatewayResponse(statusCode = status, body = Gson().toJson(response))

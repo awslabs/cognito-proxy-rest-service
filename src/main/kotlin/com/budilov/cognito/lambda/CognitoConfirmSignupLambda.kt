@@ -15,7 +15,6 @@ class CognitoConfirmSignupLambda : RequestHandler<ApiGatewayRequest.Input,
 
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse {
-        val logger = context?.logger
 
         val username = request?.headers?.get("username")
         val confirmationCode = request?.headers?.get("confirmationCode")
@@ -24,8 +23,8 @@ class CognitoConfirmSignupLambda : RequestHandler<ApiGatewayRequest.Input,
         var response = ""
 
         if (username != null && confirmationCode != null) {
-            status = 200
             response = Gson().toJson(cognito.confirmSignUp(username = username, confirmationCode = confirmationCode))
+            status = 200
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

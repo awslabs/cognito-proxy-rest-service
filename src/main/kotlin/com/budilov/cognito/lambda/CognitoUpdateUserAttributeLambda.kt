@@ -27,9 +27,9 @@ class CognitoUpdateUserAttributeLambda : RequestHandler<ApiGatewayRequest.Input,
 
         if (username != null && attributeName != null
                 && attributeValue != null) {
-            status = 200
             response = Gson().toJson(cognito.updateUserAttribute(username = username,
                     attributeName = attributeName, attributeValue = attributeValue))
+            status = 200
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

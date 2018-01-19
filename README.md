@@ -7,7 +7,9 @@
 
 #### Deployment
 
-There are 3 parameters that you will need to modify: 
+The AWS Lambda functions use environment variables for easier deployments. These are the 
+3 parameters that you will need to pass in: 
+
 ```
 RegionParameter - the region where the Lambda functions will be deployed to
 CognitoUserPoolIdParameter - the Cognito User Pool Id 
@@ -15,6 +17,7 @@ CognitoAppClientIdParameter - the Cognito App Client Id
 
 ```
 
+##### Build and deploy
 ```
 # Build the code
 ./gradlew jar
@@ -25,35 +28,39 @@ aws cloudformation deploy --template-file /tmp/deployment --stack-name auth-stac
 
 ```
 
-##### Test the Flows
+#### Test the Flows
 
-###### Sign Up
+##### Sign Up
 ```
 curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/signup' --header "username: test333@gmail.com" --header "password: Cognito&&1"
 ```
 
-###### Sign In
+##### Sign In
 ```
 curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/signin' --header "username: test333@gmail.com" --header "password: Cognito&&1"
 ```
 
-###### Password Reset
+##### Password Reset
 ```
 curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/password/reset' --header "idToken: AAAAAAAAAAAAaa"
 ```
 
-###### Refresh
+##### Refresh
 ```
 curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/refresh' --header "refreshToken: BBBBBBBBBBBBBBb"
 ```
 
-###### Check for token validity
+##### Check for token validity
 ```
 curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/token/valid' --header "idToken: AAAAAAAAAAAAaa"
 ```
 
-###### Delete User
+##### Delete User
 ```
 curl -XDELETE 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/user' --header "idToken: AAAAAAAAAAAAaa"
 ```
 
+#### CodePipeline
+```
+https://docs.aws.amazon.com/lambda/latest/dg/build-pipeline.html
+```

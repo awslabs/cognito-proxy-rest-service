@@ -15,16 +15,13 @@ class CognitoRefreshTokensLambda : RequestHandler<ApiGatewayRequest.Input,
 
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse? {
-        val logger = context?.logger
-
         val refreshToken = request?.headers?.get("refreshToken")
 
         var status = 400
-        var response: String = ""
+        var response = ""
 
         if (refreshToken != null) {
             response = Gson().toJson(cognito.adminRefreshTokens(refreshToken))
-            logger?.log("Got the response from Cognito: " + response)
             status = 200
         }
 
