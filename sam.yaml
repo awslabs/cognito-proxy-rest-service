@@ -9,6 +9,9 @@ Parameters:
   CognitoAppClientIdParameter:
     Type: String
     Default: hikoo0i7jmt9lplrd2j0n9jqo
+  CognitoAutoconfirmUserParameter:
+    Type: String
+    Default: true
 Resources:
   UserSignup:
     Type: AWS::Serverless::Function
@@ -29,6 +32,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
@@ -54,11 +59,40 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
           Properties:
             Path: /confirmsignup
+            Method: post
+  ResendConfirmationCode:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.budilov.cognito.lambda.CognitoResendConfirmationCodeLambda::handleRequest
+      FunctionName: CognitoResendConfirmationCodeLambda
+      Policies:
+       - AmazonCognitoPowerUser
+      Runtime: java8
+      MemorySize: 1024
+      Timeout: 20
+      CodeUri: build/libs/cognito-rest-service-1.0-SNAPSHOT.jar
+      Environment:
+        Variables:
+          REGION_NAME:
+            Ref: RegionParameter
+          COGNITO_USER_POOL_ID:
+            Ref: CognitoUserPoolIdParameter
+          COGNITO_APP_CLIENT_ID:
+            Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /resendcode
             Method: post
   RefreshTokens:
     Type: AWS::Serverless::Function
@@ -79,6 +113,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
@@ -104,6 +140,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
@@ -129,6 +167,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
@@ -154,6 +194,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api
@@ -180,6 +222,8 @@ Resources:
             Ref: CognitoUserPoolIdParameter
           COGNITO_APP_CLIENT_ID:
             Ref: CognitoAppClientIdParameter
+          AUTOCONFIRM_USER:
+            Ref: CognitoAutoconfirmUserParameter
       Events:
         GetResource:
           Type: Api

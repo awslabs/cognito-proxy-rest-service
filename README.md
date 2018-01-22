@@ -2,6 +2,9 @@
 It's a set of [AWS Lambda](https://aws.amazon.com/lambda/) functions that, once deployed using the provided [SAM](https://github.com/awslabs/serverless-application-model) template, act as 
 an [Amazon Cognito](https://aws.amazon.com/cognito/) proxy. 
 
+*Note: In most cases you should consider using the SDKs directly on the client, without using a proxy, especially 
+if your business usecase allows it*
+
 ### Why was this project created? 
 * QuickStart for any custom IdP --> Cognito migration service
 * Serves as a guide on how to use the Cognito Admin Java SDK

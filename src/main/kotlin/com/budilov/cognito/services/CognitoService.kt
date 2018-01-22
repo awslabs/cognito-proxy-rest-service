@@ -101,7 +101,12 @@ class CognitoService {
                 .build()
 
         return try {
-            AuthServiceResult(successful = true, result = cognitoUPClient.signUp(signUpRequest))
+            val result = cognitoUPClient.signUp(signUpRequest)
+
+            if (Properties.autoConfirmUser)
+                this.adminConfirmSignUp(username)
+
+            AuthServiceResult(successful = true, result = result)
         } catch (e: Exception) {
             AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
@@ -156,6 +161,17 @@ class CognitoService {
         }
     }
 
+    /**
+     * When a developer calls this API, the current password is invalidated, so it must be changed.
+     * If a user tries to sign in after the API is called, the app will get a PasswordResetRequiredException exception back
+     * and should direct the user down the flow to reset the password, which is the same as the forgot password flow.
+     * In addition, if the user pool has phone verification selected and a verified phone number exists for
+     * the user, or if email verification is selected and a verified email exists for the user, calling this API
+     * will also result in sending a message to the end user with the code to change their password.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminResetUserPassword.html
+     *
+     */
     fun adminResetPassword(username: String): AuthServiceResult {
         val request = AdminResetUserPasswordRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
@@ -166,6 +182,12 @@ class CognitoService {
         }
     }
 
+    /**
+     * Deletes a user as an administrator. Works on any user.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminDeleteUser.html
+     *
+     */
     fun adminDeleteUser(username: String): AuthServiceResult {
         val request = AdminDeleteUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
 
@@ -186,9 +208,16 @@ class CognitoService {
         }
     }
 
-    fun updateUserAttribute(username: String, attributeName: String, attributeValue: String) {
-        CognitoService().adminUpdateUserAttributes(username, arrayOf(AttributeType.builder().name(attributeName).value(attributeValue).build()))
+    fun resendConfirmationCode(username: String): AuthServiceResult {
+        val request = ResendConfirmationCodeRequest.builder().clientId(Properties.cognitoAppClientId).username(username).build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.resendConfirmationCode(request))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
     }
+
 
     fun adminUpdateUserAttributes(username: String, userAttributes: Array<AttributeType>): AuthServiceResult {
         val request = AdminUpdateUserAttributesRequest.builder()
@@ -202,6 +231,10 @@ class CognitoService {
         } catch (e: Exception) {
             AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
+    }
+
+    fun updateUserAttribute(username: String, attributeName: String, attributeValue: String) {
+        CognitoService().adminUpdateUserAttributes(username, arrayOf(AttributeType.builder().name(attributeName).value(attributeValue).build()))
     }
 
     fun confirmEmailAddress(username: String) {

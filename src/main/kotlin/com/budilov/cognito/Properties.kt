@@ -14,6 +14,7 @@ object Properties {
     val regionName: String = System.getenv("REGION_NAME")
     val cognitoUserPoolId: String = System.getenv("COGNITO_USER_POOL_ID")
     val cognitoAppClientId: String = System.getenv("COGNITO_APP_CLIENT_ID")
+    val autoConfirmUser: Boolean = System.getenv("AUTOCONFIRM_USER").toBoolean()
     val jwksUrl = "https://cognito-idp.$regionName.amazonaws.com/$cognitoUserPoolId/.well-known/jwks.json"
     val jwtTokenIssuer = "https://cognito-idp.$regionName.amazonaws.com/$cognitoUserPoolId"
 }
