@@ -2,8 +2,8 @@
 It's a set of [AWS Lambda](https://aws.amazon.com/lambda/) functions that, once deployed using the provided [SAM](https://github.com/awslabs/serverless-application-model) template, act as 
 an [Amazon Cognito](https://aws.amazon.com/cognito/) proxy. 
 
-*Note: In most cases you should consider using the SDKs directly on the client, without using a proxy, especially 
-if your business usecase allows it*
+*Note: In most cases you should consider using the SDKs directly on the client side, without using a proxy, especially 
+if your business use-case allows it*
 
 ### Why was this project created? 
 * QuickStart for any custom IdP --> Cognito migration service
@@ -32,38 +32,57 @@ CognitoAutoconfirmUserParameter | Setting this value to 'true' will auto-confirm
 # Package it
 aws cloudformation package --template-file sam.yaml --s3-bucket code.budilovv --output-template-file /tmp/UpdatedSAMTemplate.yaml
 # Deploy it
-aws cloudformation deploy --template-file /tmp/UpdatedSAMTemplate.yaml --stack-name auth-stack --parameter-overrides RegionParameter=REGION CognitoUserPoolIdParameter=REGION_PGSbCVZ7S CognitoAppClientIdParameter=hikoo0i7jmt9lplrd2j0n9jqo --capabilities CAPABILITY_IAM
+aws cloudformation deploy --template-file /tmp/UpdatedSAMTemplate.yaml --stack-name auth-stack \ 
+    --parameter-overrides \
+        RegionParameter=REGION \
+        CognitoUserPoolIdParameter=REGION_xxxxxxxxx \
+        CognitoAppClientIdParameter=xxxxxxxxxxxxxxxxxxxxx \
+        CognitoAutoconfirmUserParameter=true \
+    --capabilities CAPABILITY_IAM
 
 ```
 
 ### Test the Flows
 
-##### Sign Up
 ```
-curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/signup' --header "username: test333@gmail.com" --header "password: Cognito&&1"
-```
+export SAMPLE_EMAIL=myemail@email.com
+export SAMPLE_PASSWORD=myPassword**^1
+export REGION=us-east-1
+export API_GATEWAY_ID=
 
-##### Sign In
-```
-curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/signin' --header "username: test333@gmail.com" --header "password: Cognito&&1"
-```
+# Signup
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/signup' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD"
 
-##### Password Reset
-```
-curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/password/reset' --header "idToken: AAAAAAAAAAAAaa"
-```
+# Confirm SignUp
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/confirmsignup' --header "username: $SAMPLE_EMAIL" --header "confirmationCode: CONFIRMATION_CODE"
 
-##### Refresh
-```
-curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/refresh' --header "refreshToken: BBBBBBBBBBBBBBb"
-```
+# SignIn
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/signin' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD"
 
-##### Check for token validity
-```
-curl -XPOST 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/token/valid' --header "idToken: AAAAAAAAAAAAaa"
-```
 
-##### Delete User
-```
-curl -XDELETE 'https://API_GATEWAY_ID.execute-api.REGION.amazonaws.com/Prod/user' --header "idToken: AAAAAAAAAAAAaa"
+# Refresh Tokens
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/refresh' --header "refreshToken: JWT_REFRESH_TOKEN"
+
+# Check if the token is valid
+curl -XGET 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/token/valid' --header "idToken: JWT_ID_TOKEN"
+
+# Reset Password
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/password/reset' --header "username: $SAMPLE_EMAIL"
+
+# Create a new password
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/password/confirm' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD" --header "confirmationCode: CONFIRMATION_CODE"
+
+# Update User Attribute
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/user/attribute' --header "idToken: JWT_ID_TOKEN" --header "attributeName: name" --header "attributeValue: Vladimir Budilov"
+
+# Delete User
+curl -XDELETE 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/user' --header "idToken: JWT_ID_TOKEN" 
+
+
+# Resend Confirmation Code (can be used only when verification is turned on)
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/resendcode' --header "username: $SAMPLE_EMAIL"
+
+# Confirm SignUp (can be used only when verification is turned on)
+curl -XPOST 'https://60ii5ih8b4.execute-api.us-east-1.amazonaws.com/Prod/confirmsignup' --header "username: $SAMPLE_EMAIL" --header "confirmationCode: CONFIRMATION_CODE"
+
 ```

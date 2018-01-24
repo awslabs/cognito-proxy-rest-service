@@ -22,7 +22,7 @@ class CognitoTokenValidLambda : RequestHandler<ApiGatewayRequest.Input,
         val idToken = request?.headers?.get("idToken")
 
         var status = 200
-        var response: String = ""
+        var response = ""
 
         if (idToken != null) {
             val result = try {

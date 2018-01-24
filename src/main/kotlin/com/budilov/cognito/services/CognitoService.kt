@@ -73,7 +73,7 @@ class CognitoService {
      *
      * @return the auth payload or throws an Exception
      */
-    fun signInNoSRP(username: String, password: String): AuthServiceResult {
+    fun adminInitiateAuth(username: String, password: String): AuthServiceResult {
         val authParametersMap = mutableMapOf("USERNAME" to username, "PASSWORD" to password)
         val authRequest = AdminInitiateAuthRequest.builder()
                 .clientId(Properties.cognitoAppClientId)
@@ -89,6 +89,11 @@ class CognitoService {
         }
     }
 
+    /**
+     * Registers the user in the specified user pool and creates a user name, password, and user attributes.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html
+     */
     fun signUp(username: String, password: String): AuthServiceResult {
         logger.debug("entering function")
         val attr = AttributeType.builder().name("email").value(username).build()
@@ -103,8 +108,10 @@ class CognitoService {
         return try {
             val result = cognitoUPClient.signUp(signUpRequest)
 
-            if (Properties.autoConfirmUser)
+            if (Properties.autoConfirmUser) {
                 this.adminConfirmSignUp(username)
+                this.confirmEmailAddress(username)
+            }
 
             AuthServiceResult(successful = true, result = result)
         } catch (e: Exception) {
@@ -113,6 +120,10 @@ class CognitoService {
     }
 
     /**
+     *
+     * Confirms user registration as an admin without using a confirmation code. Works on any user.
+     * Requires developer credentials.
+     *
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminConfirmSignUp.html
      */
     fun adminConfirmSignUp(username: String): AuthServiceResult {
@@ -126,6 +137,9 @@ class CognitoService {
     }
 
     /**
+     * Confirms user registration as an admin without using a confirmation code. Works on any user.
+     * Requires developer credentials.
+     *
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminConfirmSignUp.html
      */
     fun confirmSignUp(username: String, confirmationCode: String): AuthServiceResult {
@@ -141,6 +155,7 @@ class CognitoService {
     }
 
     /**
+     * Initiates the authentication flow, as an administrator. Requires developer credentials.
      *
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminInitiateAuth.html
      */
@@ -162,21 +177,44 @@ class CognitoService {
     }
 
     /**
-     * When a developer calls this API, the current password is invalidated, so it must be changed.
-     * If a user tries to sign in after the API is called, the app will get a PasswordResetRequiredException exception back
-     * and should direct the user down the flow to reset the password, which is the same as the forgot password flow.
-     * In addition, if the user pool has phone verification selected and a verified phone number exists for
-     * the user, or if email verification is selected and a verified email exists for the user, calling this API
-     * will also result in sending a message to the end user with the code to change their password.
+     * Calling this API causes a message to be sent to the end user with a confirmation code that is
+     * required to change the user's password. For the Username parameter, you can use the username or
+     * user alias. If a verified phone number exists for the user, the confirmation code is sent to the phone
+     * number. Otherwise, if a verified email exists, the confirmation code is sent to the email. If neither a
+     * verified phone number nor a verified email exists, InvalidParameterException is thrown. To use the
+     * confirmation code for resetting the password, call ConfirmForgotPassword.
      *
-     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminResetUserPassword.html
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ForgotPassword.html
      *
      */
-    fun adminResetPassword(username: String): AuthServiceResult {
-        val request = AdminResetUserPasswordRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
+    fun forgotPassword(username: String): AuthServiceResult {
+        val request = ForgotPasswordRequest.builder()
+                .clientId(Properties.cognitoAppClientId)
+                .username(username)
+                .build()
 
         return try {
-            AuthServiceResult(successful = true, result = cognitoUPClient.adminResetUserPassword(request))
+            AuthServiceResult(successful = true, result = cognitoUPClient.forgotPassword(request))
+        } catch (e: Exception) {
+            AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
+        }
+    }
+
+    /**
+     * Allows a user to enter a confirmation code to reset a forgotten password.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ConfirmForgotPassword.html
+     */
+    fun confirmForgotPassword(username: String, confirmationCode: String, password: String): AuthServiceResult {
+        val request = ConfirmForgotPasswordRequest.builder()
+                .clientId(Properties.cognitoAppClientId)
+                .username(username)
+                .confirmationCode(confirmationCode)
+                .password(password)
+                .build()
+
+        return try {
+            AuthServiceResult(successful = true, result = cognitoUPClient.confirmForgotPassword(request))
         } catch (e: Exception) {
             AuthServiceResult(successful = false, errorMessage = ExceptionUtils.getRootCauseMessage(e), errorType = e.javaClass.simpleName)
         }
@@ -189,7 +227,10 @@ class CognitoService {
      *
      */
     fun adminDeleteUser(username: String): AuthServiceResult {
-        val request = AdminDeleteUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
+        val request = AdminDeleteUserRequest.builder()
+                .userPoolId(Properties.cognitoUserPoolId)
+                .username(username)
+                .build()
 
         return try {
             AuthServiceResult(successful = true, result = cognitoUPClient.adminDeleteUser(request))
@@ -198,8 +239,16 @@ class CognitoService {
         }
     }
 
+    /**
+     * Gets the specified user by user name in a user pool as an administrator. Works on any user. Requires developer credentials.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminGetUser.html
+     */
     fun adminGetUser(username: String): AuthServiceResult {
-        val request = AdminGetUserRequest.builder().userPoolId(Properties.cognitoUserPoolId).username(username).build()
+        val request = AdminGetUserRequest.builder()
+                .userPoolId(Properties.cognitoUserPoolId)
+                .username(username)
+                .build()
 
         return try {
             AuthServiceResult(successful = true, result = cognitoUPClient.adminGetUser(request))
@@ -208,6 +257,11 @@ class CognitoService {
         }
     }
 
+    /**
+     * Resends the confirmation (for confirmation of registration) to a specific user in the user pool.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ResendConfirmationCode.html
+     */
     fun resendConfirmationCode(username: String): AuthServiceResult {
         val request = ResendConfirmationCodeRequest.builder().clientId(Properties.cognitoAppClientId).username(username).build()
 
@@ -219,6 +273,14 @@ class CognitoService {
     }
 
 
+    /**
+     * Updates the specified user's attributes, including developer attributes, as an administrator. Works on any user.
+     * For custom attributes, you must prepend the custom: prefix to the attribute name.
+     * In addition to updating user attributes, this API can also be used to mark phone and email as verified.
+     * Requires developer credentials.
+     *
+     * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminUpdateUserAttributes.html
+     */
     fun adminUpdateUserAttributes(username: String, userAttributes: Array<AttributeType>): AuthServiceResult {
         val request = AdminUpdateUserAttributesRequest.builder()
                 .userPoolId(Properties.cognitoUserPoolId)
@@ -244,19 +306,19 @@ class CognitoService {
 }
 
 fun main(args: Array<String>) {
-    val username = "vladimir@budilov.com"
+    val username = "budilov@budilov.com"
     val password = "Vovan)))1"
     val service = CognitoService()
 
     println("deleteUser body: " + service.adminDeleteUser(username))
 
     println("signup body: " + service.signUp(username = username, password = password))
-    println("signIn body: " + service.signInNoSRP(username = username, password = password))
+    println("signIn body: " + service.adminInitiateAuth(username = username, password = password))
     println("adminGetUser: " + service.adminGetUser(username))
     println("adminUpdateEmail: " + service.confirmEmailAddress(username))
     println("adminGetUser: " + service.adminGetUser(username))
-    println("adminResetPassword: " + service.adminResetPassword(username))
-    println("signIn body: " + service.signInNoSRP(username = username, password = password))
+    println("forgotPassword: " + service.forgotPassword(username))
+    println("signIn body: " + service.adminInitiateAuth(username = username, password = password))
 
 //    println("confirmSignUp body: " + service.confirmSignUp(username = username, confirmationCode = "262580"))
 //    println("adminConfirmSignUp body: " + service.adminConfirmSignUp(username = username))

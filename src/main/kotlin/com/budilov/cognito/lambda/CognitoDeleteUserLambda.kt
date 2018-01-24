@@ -39,9 +39,9 @@ class CognitoDeleteUserLambda : RequestHandler<ApiGatewayRequest.Input,
             }
 
         } else {
-            return ApiGatewayResponse(statusCode = 400, body = Gson().toJson("A valid id token is required"))
+            return ApiGatewayResponse(statusCode = 400, body = "A valid id token is required")
         }
 
-        return ApiGatewayResponse(statusCode = status, body = Gson().toJson(response))
+        return ApiGatewayResponse(statusCode = status, body = response)
     }
 }

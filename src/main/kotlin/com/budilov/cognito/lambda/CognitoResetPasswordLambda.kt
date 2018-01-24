@@ -17,28 +17,15 @@ class CognitoResetPasswordLambda : RequestHandler<ApiGatewayRequest.Input,
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse? {
 
-        val logger = context?.logger
+        val username = request?.headers?.get("username")
 
-        val idToken = request?.headers?.get("idToken")
-
-        var status = 200
+        var status = 400
         var response = ""
 
-        if (idToken != null) {
-            // Check to see if the token is valid and if the username matches the
-            // idToken's username
-            try {
-                if (cognito.isTokenValid(idToken)) {
-                    val username = cognito.getUsername(idToken)
-                    response = Gson().toJson(cognito.adminResetPassword(username = username))
-                }
-            } catch (e: Exception) {
-                logger?.log("Couldn't figure out if the id token is valid...caught an exception...${e.message}")
-                status = 400
-            }
-
-        } else {
-            logger?.log("The id token is required")
+        if (username != null) {
+            val result = cognito.forgotPassword(username = username)
+            status = 200
+            response = Gson().toJson(result)
         }
 
         return ApiGatewayResponse(statusCode = status, body = response)

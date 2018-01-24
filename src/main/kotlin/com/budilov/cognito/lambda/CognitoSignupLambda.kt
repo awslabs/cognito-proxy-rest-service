@@ -15,12 +15,10 @@ class CognitoSignupLambda : RequestHandler<ApiGatewayRequest.Input,
 
     override fun handleRequest(request: ApiGatewayRequest.Input?,
                                context: Context?): ApiGatewayResponse {
-        val logger = context?.logger
 
         val username = request?.headers?.get("username")
         val password = request?.headers?.get("password")
 
-        logger?.log("${username} & ${password}")
         var status = 400
         var response = ""
 
