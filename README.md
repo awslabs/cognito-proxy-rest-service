@@ -53,12 +53,8 @@ export API_GATEWAY_ID=
 # Signup
 curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/signup' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD"
 
-# Confirm SignUp
-curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/confirmsignup' --header "username: $SAMPLE_EMAIL" --header "confirmationCode: CONFIRMATION_CODE"
-
 # SignIn
 curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/signin' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD"
-
 
 # Refresh Tokens
 curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/refresh' --header "refreshToken: JWT_REFRESH_TOKEN"
@@ -78,11 +74,14 @@ curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admi
 # Delete User
 curl -XDELETE 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/admin/user' --header "idToken: JWT_ID_TOKEN" 
 
+```
 
-# Resend Confirmation Code (can be used only when verification is turned on)
+##### The following endpoints are only valid when MFA verification is turned on. Not valid for a seamless migration experience for customers, but still good to showcase this functionality 
+```
+# Resend Confirmation Code 
 curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/resendcode' --header "username: $SAMPLE_EMAIL"
 
-# Confirm SignUp (can be used only when verification is turned on)
-curl -XPOST 'https://60ii5ih8b4.execute-api.us-east-1.amazonaws.com/Prod/confirmsignup' --header "username: $SAMPLE_EMAIL" --header "confirmationCode: CONFIRMATION_CODE"
+# Confirm SignUp
+curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/confirmsignup' --header "username: $SAMPLE_EMAIL" --header "confirmationCode: CONFIRMATION_CODE"
 
 ```
