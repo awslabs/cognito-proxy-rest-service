@@ -9,28 +9,31 @@ if your business use-case allows it*
 * QuickStart for any custom IdP --> Cognito migration service
 * Serves as a guide on how to use the Cognito Admin Java SDK
 
-[Serverless Application Model -- How-To](https://github.com/awslabs/serverless-application-model/blob/master/HOWTO.md)
+### Prerequisites
+You need to already have or [create a new Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/create-new-user-pool-console-quickstart.html). For migration purposes, you might want to disable the email/phone verification, otherwise
+every newly-created user will receive an email with a confirmation code. 
 
 ### Deployment
-
-The AWS Lambda functions use environment variables for easier deployments. These are the 
-3 parameters that you will need to pass in: 
+[SAM](https://github.com/awslabs/serverless-application-model/blob/master/HOWTO.md) is used to deploy the project. 
+The AWS Lambda functions use environment variables for easier deployments. These are the 3 parameters that you will need to pass in: 
 
 
 Property | Description 
 --- | --- 
-RegionParameter | the region where the Lambda functions will be deployed to 
-CognitoUserPoolIdParameter | the Cognito User Pool Id 
-CognitoAppClientIdParameter | the Cognito App Client Id
-CognitoAutoconfirmUserParameter | Setting this value to 'true' will auto-confirm newly signed-up users
+RegionParameter | region where the Lambda functions will be deployed to 
+CognitoUserPoolIdParameter | Cognito User Pool Id 
+CognitoAppClientIdParameter | Cognito App Client Id
+CognitoAutoconfirmUserParameter | Set to 'true' to auto-confirm newly signed-up users and auto-verify their emails
 
 
 ##### Build and deploy
 ```
 # Build the code
 ./gradlew jar
+
 # Package it
-aws cloudformation package --template-file sam.yaml --s3-bucket code.budilovv --output-template-file /tmp/UpdatedSAMTemplate.yaml
+aws cloudformation package --template-file sam.yaml --s3-bucket YOUR_BUCKET_NAME --output-template-file /tmp/UpdatedSAMTemplate.yaml
+
 # Deploy it
 aws cloudformation deploy --template-file /tmp/UpdatedSAMTemplate.yaml --stack-name auth-stack \ 
     --parameter-overrides \
@@ -48,7 +51,7 @@ aws cloudformation deploy --template-file /tmp/UpdatedSAMTemplate.yaml --stack-n
 export SAMPLE_EMAIL=myemail@email.com
 export SAMPLE_PASSWORD=myPassword**^1
 export REGION=us-east-1
-export API_GATEWAY_ID=
+export API_GATEWAY_ID=your-api-gateway-url
 
 # Signup
 curl -XPOST 'https://$API_GATEWAY_ID.execute-api.$REGION.amazonaws.com/Prod/signup' --header "username: $SAMPLE_EMAIL" --header "password: $SAMPLE_PASSWORD"
