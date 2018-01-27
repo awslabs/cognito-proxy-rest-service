@@ -6,8 +6,10 @@ an [Amazon Cognito](https://aws.amazon.com/cognito/) proxy.
 if your business use-case allows it*
 
 ### Why was this project created? 
-* QuickStart for any custom IdP --> Cognito migration service
+* One-at-a-time user migration, described [here](https://aws.amazon.com/blogs/mobile/migrating-users-to-amazon-cognito-user-pools/)
 * Serves as a guide on how to use the Cognito Admin Java SDK
+* A QuickStart for anyone trying out Cognito without the need to significantly modify the UI
+    * *Cognito provides [SDKs](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html) that lets you integrate Cognito on the UI, and that is the recommended way for interacting with this service, but if you are limited in how much you can modify your UI at this time, you can utilize this Cognito proxy* 
 
 ### Prerequisites
 You need to already have or [create a new Cognito User Pool](https://docs.aws.amazon.com/cognito/latest/developerguide/create-new-user-pool-console-quickstart.html). For migration purposes, you might want to disable the email/phone verification, otherwise
