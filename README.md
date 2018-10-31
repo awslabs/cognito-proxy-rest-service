@@ -1,3 +1,7 @@
+### Author: Vladimir Budilov
+[LinkedIn](https://www.linkedin.com/in/vbudilov/)
+[Medium](https://medium.com/@budilov)
+
 ### What is it? 
 It's a set of [AWS Lambda](https://aws.amazon.com/lambda/) functions that, once deployed using the provided [SAM](https://github.com/awslabs/serverless-application-model) template, act as 
 an [Amazon Cognito](https://aws.amazon.com/cognito/) proxy. 
