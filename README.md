@@ -3,6 +3,7 @@
 ### Author: Vladimir Budilov
 * [LinkedIn](https://www.linkedin.com/in/vbudilov/)
 * [Medium](https://medium.com/@budilov)
+* [Twitter](https://twitter.com/VladimirBudilov)
 
 ### What is it? 
 It's a set of [AWS Lambda](https://aws.amazon.com/lambda/) functions that, once deployed using the provided [SAM](https://github.com/awslabs/serverless-application-model) template, act as 
